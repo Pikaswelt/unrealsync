@@ -1,0 +1,40 @@
+{
+  "name": "unrealsync",
+  "version": "1.0.0",
+  "description": "Zero-Hassle Git & GitHub Collaboration for Unreal Engine 5",
+  "main": "server/index.js",
+  "type": "module",
+  "scripts": {
+    "server": "node server/index.js",
+    "client": "vite",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "unreal-engine-5",
+    "ue5",
+    "git",
+    "github",
+    "version-control",
+    "game-dev"
+  ],
+  "author": "Pikaswelt",
+  "license": "MIT",
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "lucide-react": "^1.48.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tailwind-merge": "^3.7.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^9.1.2",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.1"
+  }
+}

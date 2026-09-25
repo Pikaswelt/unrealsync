@@ -1,124 +1,89 @@
-# 🎮 UnrealSync
+# UnrealSync
 
-<div align="center">
+Desktop-App (Tauri 2, Windows), mit der ein Team ein Unreal-Projekt über GitHub teilt – ohne Git-Kommandos.
+Einmal einrichten, danach nur noch **Änderungen holen**, **Hochladen** und sehen, **wer woran arbeitet**.
 
-**The easiest, zero-hassle Git & GitHub collaboration tool for Unreal Engine 5 projects.**
+## So funktioniert's
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine-5.0%20%7C%205.1%20%7C%205.2%20%7C%205.3%20%7C%205.4%20%7C%205.5-orange.svg)](https://www.unrealengine.com/)
-[![React 19](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-8-646cff.svg)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4-38bdf8.svg)](https://tailwindcss.com/)
+- **Ein Hauptstand (`main`) + Sperren.** Unreal-Assets (`.uasset`, `.umap`) lassen sich nicht zusammenführen.
+  Deshalb werden sie über Git LFS gespeichert und sind *sperrbar*: Wer ein Asset bearbeitet, sperrt es –
+  alle anderen sehen das unter „Team & Sperren“. Nicht gesperrte Assets sind schreibgeschützt, Unreal fragt dann nach,
+  statt still Arbeit zu überschreiben.
+- **Automatisch sperren:** Speicherst du ein Asset in Unreal, sperrt UnrealSync es für dich (abschaltbar).
+  Hat jemand anderes es gesperrt, kommt sofort eine Windows-Benachrichtigung.
+- **Hochladen:** Dateien auswählen, kurz beschreiben, fertig. Vorher werden die Team-Änderungen geholt,
+  danach werden deine Sperren freigegeben.
+- **Holen ist sicher:** Große Dateien werden *vor* jeder Änderung am Projektordner vollständig geladen.
+  Lokale Änderungen werden nie überschrieben – überschneidet sich etwas, fragt die App pro Datei nach.
+- **Unreal offen?** Die App warnt vor dem Holen (sonst überschreibt Unreal neue Dateien wieder).
 
-[Features](#-key-features) • [Quick Start](#-quick-start) • [How It Works](#-how-it-works) • [Conflict Shield](#-conflict-shield-for-blueprints--levels) • [Contributing](#-contributing)
+## Speicher für große Dateien (im Setup wählbar, später umziehbar)
 
-</div>
+| Option | Kosten | Hinweis |
+|---|---|---|
+| **GitHub LFS** | 10 GB Speicher + 10 GB Download/Monat gratis, danach pro GB | Null Einrichtung |
+| **Eigener Cloud-Speicher** (Cloudflare R2, Backblaze B2, S3) | R2: 10 GB gratis, **Downloads kostenlos** | Code bleibt auf GitHub. Teammitglieder brauchen einmal den Zugangscode (unter „Speicher“) |
+| **Eigener Git-Server** (Forgejo/Gitea/GitLab) | eigene Hardware | Anmeldung mit Server-URL + Token |
 
----
+„Speicher umziehen“ kopiert alle Versionen in den neuen Speicher und stellt das Team automatisch um.
+Die S3-Anbindung läuft ohne eigenen Server: Git LFS startet `UnrealSync.exe lfs-agent …` als Transfer-Agent.
 
-## 💡 Why UnrealSync?
+## Einrichten
 
-Setting up Git and collaborating on **Unreal Engine 5** games with GitHub Desktop or CLI has always been notoriously painful for game developers:
+**Person 1 (lädt das Projekt hoch):** Installer ausführen → mit GitHub anmelden → „Neues Projekt hochladen“ →
+Projektordner wählen → Speicher wählen → GitHub-Namen des Freundes eintragen → „Projekt hochladen“.
 
-1. **Gigantic Uploads**: Forgetting to exclude `Saved/`, `Intermediate/`, or `DerivedDataCache/` causes tens or hundreds of gigabytes of temporary engine files to get committed and brick your repository.
-2. **Locked File Crashes**: Running `git pull` or `git checkout` while `UnrealEditor.exe` is open corrupts assets or throws Windows file-lock errors.
-3. **Binary Merge Conflicts**: Blueprints (`.uasset`) and Levels (`.umap`) are **binary files**. Git cannot merge them automatically line-by-line. If two developers edit the same character blueprint or level, traditional tools force you to discard one person's work.
-4. **Collaboration Hurdles**: Navigating GitHub.com settings menus just to invite a teammate and guide them through cloning and locating the `.uproject` file.
+**Person 2 (tritt bei):** Installer ausführen → mit GitHub anmelden → „Projekt beitreten“ → Einladung annehmen →
+Speicherort wählen → „Herunterladen“ (bei Cloud-Speicher: Zugangscode eingeben).
 
-**UnrealSync solves all of this with an intuitive, game-dev-centric dashboard.**
+> ⚠️ Das Unreal-Projekt **nicht in OneDrive/Dropbox** ablegen – deren Synchronisation sperrt und beschädigt
+> Git- und Unreal-Dateien. Die App warnt davor.
 
----
+### GitHub-Anmeldung
 
-## 🚀 Key Features
+- **Ohne weitere Einrichtung:** Persönliches Token (Classic, Scope `repo`) – die App verlinkt die passende GitHub-Seite.
+- **Bequemer Browser-Login (optional):** Auf GitHub unter *Settings → Developer settings → OAuth Apps → New OAuth App*
+  eine App anlegen (Homepage/Callback beliebig, z. B. `https://github.com`), **„Enable Device Flow“** anhaken und die
+  **Client-ID** in der App unter *Einstellungen* eintragen – oder beim Bauen fest einbauen:
+  `set UNREALSYNC_GITHUB_CLIENT_ID=Ov23li…` vor `npm run tauri build`.
 
-### 🛡️ 1-Click Engine Project Setup
-- Point to your Unreal Engine 5 project folder or `.uproject` file.
-- **Auto-Generates Production `.gitignore`**: Instantly ignores `Saved/`, `Intermediate/`, `DerivedDataCache/`, `Binaries/`, `.vs/`, and autogenerated IDE files.
-- **Auto-Configures `.gitattributes`**: Normalizes text files and safeguards `.uasset` / `.umap` against CRLF line ending corruption.
-- **Automatic GitHub Cloud Repo Creation**: Initializes local Git, creates a **Private GitHub repository** via the GitHub API, and pushes your initial commit in seconds.
+Tokens und Speicher-Schlüssel liegen in der Windows-Anmeldeinformationsverwaltung, nie im Repo.
 
-### 🛑 Real-Time Engine-Guard (Process Monitor)
-- Detects whether `UnrealEditor.exe` is running on Windows in real-time.
-- Shows a live **Safe / Locked** indicator.
-- Automatically prevents destructive actions (`Pull`, `Discard`, `Branch switch`) while Unreal Engine has project files loaded into memory, protecting your assets from corruption.
+## Entwickeln & bauen
 
-### 🛡️ Conflict Shield (Smart Blueprint & Map Rescue)
-When binary conflicts occur on `.uasset` or `.umap` files, UnrealSync provides 3 clear paths:
-- **Keep Mine**: Prioritizes your local changes.
-- **Keep Cloud**: Accepts your teammate's latest version.
-- **💡 Smart Rescue & Backup (Recommended)**: Automatically creates a timestamped backup of your local modified asset in `Saved/Conflict_Backups/`, pulls your teammate's cloud version, and gives you a 1-click path to copy nodes or use UE5's visual Blueprint Diff Tool.
+Voraussetzungen: Node 20+, Rust (stable), WebView2 (bei Windows 11 dabei).
 
-### 👥 In-App Team Hub
-- Invite teammates directly by typing their GitHub username—no web browser navigation required.
-- View all collaborators and their access permissions.
-- **1-Click Join**: Teammates open the tool, paste the repository URL, pick a folder, and clone the project ready-to-run.
+```bash
+npm install
+npm run fetch-git        # einmalig: MinGit + Git LFS nach src-tauri/resources/mingit (für den Installer)
+npm run tauri dev        # App im Entwicklungsmodus
+npm run tauri build      # Installer: <target>/release/bundle/nsis/UnrealSync_x.y.z_x64-setup.exe
+cd src-tauri && cargo test --lib
+```
 
-### 🔷 Smart Asset Categorization & Commit Presets
-- Categorizes modified files into:
-  - 🔷 **Blueprints** (`.uasset`)
-  - 🗺️ **Levels & Maps** (`.umap`)
-  - 💻 **C++ Code** (`.cpp`, `.h`)
-  - ⚙️ **Config** (`.ini`)
-- Highlights critical binary files with warning badges if they are shared assets (e.g. `Character`, `GameMode`).
-- Instant commit message templates tailored for game development.
+Liegt der Quellcode in OneDrive, die Rust-Build-Ausgabe auslagern – OneDrive sperrt sonst Dateien während des Builds.
+Dazu `src-tauri/.cargo/config.toml` anlegen (wird nicht eingecheckt):
 
----
+```toml
+[build]
+target-dir = "C:/Users/<du>/AppData/Local/UnrealSync-build/target"
+```
 
-## ⚡ Quick Start
+## Aufbau
 
-### Prerequisites
-- Windows 10 / 11
-- [Git](https://git-scm.com/) installed
-- [Node.js](https://nodejs.org/) (v18+)
-- [GitHub CLI (`gh`)](https://cli.github.com/) authenticated (`gh auth login`)
+```
+src/                     React-Oberfläche (Setup-Assistent, Übersicht, Team, Verlauf, Speicher, Einstellungen)
+src-tauri/src/
+  git.rs                 Git/LFS-Aufrufe ohne Konsolenfenster, Token per Umgebungsvariable, Fortschritt
+  github.rs              Anmeldung (Device Flow / Token), Repo anlegen, Einladungen, Mitglieder
+  project.rs             Hochladen/Beitreten, .gitignore/.gitattributes, .unrealsync.json, Speicher-Konfiguration
+  sync.rs                Status, sicheres Holen, Hochladen, Konflikte, Verlauf
+  locks.rs               Git-LFS-Sperren
+  watcher.rs             Dateiwächter: Auto-Sperren + Warnungen
+  storage.rs             Speicheranzeige, Umzug, Zugangscode
+  s3.rs / lfs_agent.rs   S3-Client (SigV4) + Git-LFS-Transfer-Agent
+```
 
-### Running UnrealSync Locally
+## Lizenz
 
-1. **Clone this repository:**
-   ```bash
-   git clone https://github.com/Pikaswelt/unrealsync.git
-   cd unrealsync
-   ```
-
-2. **Run with 1 click on Windows:**
-   Double-click `run.bat` or run:
-   ```bash
-   npm install
-   npm run dev
-   ```
-
-3. Open **`http://localhost:5173`** in your browser.
-
----
-
-## 🛠️ Tech Stack & Architecture
-
-- **Frontend**: [React 19](https://react.dev/), [Vite](https://vitejs.dev/), [Tailwind CSS v4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/)
-- **Backend Service**: [Express](https://expressjs.com/), Node.js `child_process`
-- **Engine Process Guard**: Windows `tasklist` Win32 integration
-- **Version Control**: Native Git CLI wrapper + [GitHub CLI (`gh`) REST API](https://cli.github.com/)
-
----
-
-## 📖 Handling Unreal Engine 5 Merge Conflicts
-
-Because `.uasset` and `.umap` files are binary:
-1. **Best Practice**: Use Actor Components and separate levels to minimize simultaneous edits on the same asset.
-2. If two team members edit the same file:
-   - Run **UnrealSync**.
-   - The **Conflict Shield** modal will automatically activate.
-   - Choose **Smart Rescue**: Your custom blueprint logic is preserved in `Saved/Conflict_Backups/`, while your teammate's changes are applied cleanly.
-   - Reopen Unreal Engine and copy/paste your custom nodes into the updated blueprint.
-
----
-
-## 🤝 Contributing
-
-Contributions, feature suggestions, and bug reports are welcome!
-Please check [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT – siehe [LICENSE](LICENSE).
